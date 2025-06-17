@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+
+{% block title %}Mensagem WhatsApp - Sistema de Transportes{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <!-- Cabeçalho -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1>
+                    <i class="fab fa-whatsapp me-2 text-success"></i>
+                    Mensagem WhatsApp
+                </h1>
+                <p class="text-muted mb-0">
+                    Mensagem formatada para enviar ao motorista da região {{ regiao }}
+                </p>
+            </div>
+            <div>
+                <a href="{{ url_for('agenda') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>
+                    Voltar à Agenda
+                </a>
+            </div>
+        </div>
+
+        <!-- Informações da Mensagem -->
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="card bg-success text-white">
+                    <div class="card-body text-center">
+                        <h3 class="card-title">{{ total_clientes }}</h3>
+                        <p class="card-text">Clientes na Lista</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card bg-info text-white">
+                    <div class="card-body text-center">
+                        <h3 class="card-title">{{ regiao }}</h3>
+                        <p class="card-text">Região do Motorista</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card bg-primary text-white">
+                    <div class="card-body text-center">
+                        <h3 class="card-title"><i class="fab fa-whatsapp"></i></h3>
+                        <p class="card-text">Pronto para WhatsApp</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mensagem Formatada -->
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-comment-dots me-2"></i>
+                        Mensagem Formatada
+                    </h5>
+                    <button class="btn btn-success" onclick="copiarMensagem()">
+                        <i class="fas fa-copy me-2"></i>
+                        Copiar Mensagem
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Instruções:</strong> Clique em "Copiar Mensagem" e depois cole no WhatsApp do motorista.
+                </div>
+                
+                <div class="bg-light p-3 rounded border">
+                    <pre id="mensagemTexto" style="white-space: pre-wrap; margin: 0; font-family: inherit;">{{ mensagem }}</pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ações -->
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h6><i class="fab fa-whatsapp text-success me-2"></i>Enviar por WhatsApp</h6>
+                        <p class="text-muted">Copie a mensagem e envie diretamente para o motorista.</p>
+                        <button class="btn btn-success" onclick="abrirWhatsApp()">
+                            <i class="fab fa-whatsapp me-2"></i>
+                            Abrir WhatsApp Web
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h6><i class="fas fa-download text-primary me-2"></i>Guardar Mensagem</h6>
+                        <p class="text-muted">Guarde uma cópia da mensagem num ficheiro de texto.</p>
+                        <button class="btn btn-primary" onclick="descarregarMensagem()">
+                            <i class="fas fa-download me-2"></i>
+                            Descarregar TXT
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function copiarMensagem() {
+    const mensagem = document.getElementById('mensagemTexto').textContent;
+    
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(mensagem).then(function() {
+            alert('Mensagem copiada com sucesso!');
+        }).catch(function(err) {
+            console.error('Erro ao copiar:', err);
+            fallbackCopy();
+        });
+    } else {
+        fallbackCopy();
+    }
+}
+
+function fallbackCopy() {
+    const mensagem = document.getElementById('mensagemTexto');
+    const range = document.createRange();
+    range.selectNode(mensagem);
+    window.getSelection().removeAllRanges();
+    window.getSelection().addRange(range);
+    
+    try {
+        document.execCommand('copy');
+        alert('Mensagem copiada com sucesso!');
+    } catch (err) {
+        alert('Erro ao copiar mensagem. Selecione o texto manualmente.');
+    }
+    
+    window.getSelection().removeAllRanges();
+}
+
+function abrirWhatsApp() {
+    const mensagem = document.getElementById('mensagemTexto').textContent;
+    const mensagemCodificada = encodeURIComponent(mensagem);
+    const urlWhatsApp = `https://web.whatsapp.com/send?text=${mensagemCodificada}`;
+    window.open(urlWhatsApp, '_blank');
+}
+
+function descarregarMensagem() {
+    const mensagem = document.getElementById('mensagemTexto').textContent;
+    const blob = new Blob([mensagem], { type: 'text/plain' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `clientes_{{ regiao }}_${new Date().toISOString().slice(0,10).replace(/-/g,'')}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+}
+</script>
+{% endblock %}
