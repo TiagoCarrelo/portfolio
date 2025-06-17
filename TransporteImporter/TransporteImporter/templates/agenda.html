@@ -1,0 +1,413 @@
+{% extends "base.html" %}
+
+{% block title %}Agenda de Clientes - Sistema de Transportes{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <!-- Cabeçalho da Agenda -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1>
+                    <i class="fas fa-calendar me-2"></i>
+                    Agenda de Clientes
+                </h1>
+                <p class="text-muted mb-0">
+                    Visualize e gerencie os clientes importados e seus agendamentos
+                </p>
+            </div>
+            <div>
+                <a href="{{ url_for('importar') }}" class="btn btn-primary me-2">
+                    <i class="fas fa-plus me-2"></i>
+                    Importar Novos Clientes
+                </a>
+                {% if clientes %}
+                <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#limparListaModal">
+                    <i class="fas fa-trash me-2"></i>
+                    Limpar Lista de Clientes
+                </button>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Estatísticas Rápidas -->
+        <div class="row mb-4">
+            <div class="col-md-2">
+                <div class="card bg-primary">
+                    <div class="card-body text-center">
+                        <h3 class="card-title">{{ clientes|length }}</h3>
+                        <p class="card-text">Total Clientes</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="card bg-success">
+                    <div class="card-body text-center">
+                        <h3 class="card-title">{{ clientes|selectattr('status_cliente', 'equalto', 'Transportado')|list|length }}</h3>
+                        <p class="card-text">Transportados</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="card bg-danger">
+                    <div class="card-body text-center">
+                        <h3 class="card-title">{{ clientes|selectattr('status_cliente', 'equalto', 'Removido')|list|length }}</h3>
+                        <p class="card-text">Removidos</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="card bg-warning">
+                    <div class="card-body text-center">
+                        <h3 class="card-title">{{ clientes|selectattr('status_cliente', 'equalto', 'Importado')|list|length }}</h3>
+                        <p class="card-text">Pendentes</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="card bg-info">
+                    <div class="card-body text-center">
+                        <h3 class="card-title">{{ agendamentos|length }}</h3>
+                        <p class="card-text">Agendamentos</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="card bg-secondary">
+                    <div class="card-body text-center">
+                        <h3 class="card-title">{{ clientes|groupby('regiao')|list|length }}</h3>
+                        <p class="card-text">Regiões</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Agendamento em Lote por Região -->
+        {% if clientes %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-calendar-plus me-2"></i>
+                    Agendamento em Lote por Motorista
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for regiao, clientes_regiao in clientes|groupby('regiao') %}
+                    <div class="col-md-4 mb-3">
+                        <div class="card {% if regiao == 'Geral' %}border-danger{% else %}border-success{% endif %}">
+                            <div class="card-body text-center">
+                                {% if regiao == 'Geral' %}
+                                    <i class="fas fa-exclamation-triangle text-danger" style="font-size: 2rem;"></i>
+                                    <h6 class="mt-2 text-danger">{{ regiao }}</h6>
+                                    <small class="text-muted">Localização não reconhecida</small>
+                                {% else %}
+                                    <i class="fas fa-truck text-success" style="font-size: 2rem;"></i>
+                                    <h6 class="mt-2">Motorista {{ regiao }}</h6>
+                                    <small class="text-muted">Região identificada</small>
+                                {% endif %}
+                                <div class="mt-2">
+                                    <span class="badge bg-primary">{{ clientes_regiao|list|length }} clientes</span>
+                                </div>
+                                <div class="mt-3">
+                                    <a href="{{ url_for('gerar_mensagem_whatsapp', regiao=regiao) }}" class="btn {% if regiao == 'Geral' %}btn-warning{% else %}btn-success{% endif %} btn-sm">
+                                        <i class="fab fa-whatsapp me-1"></i>
+                                        Gerar WhatsApp
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Tabs para organizar visualização -->
+        <ul class="nav nav-tabs" id="agendaTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="clientes-tab" data-bs-toggle="tab" data-bs-target="#clientes" type="button" role="tab">
+                    <i class="fas fa-users me-2"></i>
+                    Clientes ({{ clientes|length }})
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="agendamentos-tab" data-bs-toggle="tab" data-bs-target="#agendamentos" type="button" role="tab">
+                    <i class="fas fa-calendar-check me-2"></i>
+                    Agendamentos ({{ agendamentos|length }})
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="agendaTabsContent">
+            <!-- Aba de Clientes -->
+            <div class="tab-pane fade show active" id="clientes" role="tabpanel">
+                <div class="card">
+                    <div class="card-body">
+                        {% if clientes %}
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Nome</th>
+                                            <th>Região</th>
+                                            <th>Horário</th>
+                                            <th>Destino</th>
+                                            <th>Seguro</th>
+                                            <th>Contacto</th>
+                                            <th>Status</th>
+                                            <th>Info</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for cliente in clientes %}
+                                        <tr>
+                                            <td>
+                                                <strong>{{ cliente.nome }}</strong>
+                                                {% if cliente.morada %}
+                                                    <br><small class="text-muted">{{ cliente.morada[:40] }}{% if cliente.morada|length > 40 %}...{% endif %}</small>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if cliente.regiao == 'Geral' %}
+                                                    <span class="badge bg-danger text-white">
+                                                        <i class="fas fa-exclamation-triangle me-1"></i>{{ cliente.regiao }}
+                                                    </span>
+                                                    <br><small class="text-danger">Localização não reconhecida</small>
+                                                {% else %}
+                                                    <span class="badge bg-success">
+                                                        <i class="fas fa-truck me-1"></i>{{ cliente.regiao }}
+                                                    </span>
+                                                    <br><small class="text-success">Motorista atribuído</small>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if cliente.horario %}
+                                                    <span class="badge bg-info">{{ cliente.horario }}</span>
+                                                {% else %}
+                                                    <span class="text-muted">-</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if cliente.destino %}
+                                                    <i class="fas fa-map-marker-alt text-primary me-1"></i>{{ cliente.destino[:25] }}{% if cliente.destino|length > 25 %}...{% endif %}
+                                                {% else %}
+                                                    <span class="text-muted">-</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if cliente.nome_seguro %}
+                                                    <span class="badge bg-success">{{ cliente.nome_seguro }}</span>
+                                                {% else %}
+                                                    <span class="text-muted">-</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if cliente.contacto %}
+                                                    <a href="tel:{{ cliente.contacto }}" class="text-decoration-none">
+                                                        <i class="fas fa-phone me-1"></i>{{ cliente.contacto }}
+                                                    </a>
+                                                {% else %}
+                                                    <span class="text-muted">-</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if cliente.status_cliente == 'Importado' %}
+                                                    <span class="badge bg-secondary">Importado</span>
+                                                {% elif cliente.status_cliente == 'Transportado' %}
+                                                    <span class="badge bg-success">
+                                                        <i class="fas fa-check-circle me-1"></i>Transportado
+                                                    </span>
+                                                {% elif cliente.status_cliente == 'Removido' %}
+                                                    <span class="badge bg-danger">
+                                                        <i class="fas fa-times-circle me-1"></i>Removido
+                                                    </span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <span class="text-muted">
+                                                    <i class="fas fa-info-circle me-1"></i>
+                                                    Use agendamento em lote
+                                                </span>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <div class="text-center py-5">
+                                <i class="fas fa-users text-muted" style="font-size: 4rem;"></i>
+                                <h4 class="mt-3">Nenhum cliente encontrado</h4>
+                                <p class="text-muted">Importe clientes para começar a usar o sistema.</p>
+                                <a href="{{ url_for('importar') }}" class="btn btn-primary">
+                                    <i class="fas fa-upload me-2"></i>
+                                    Importar Clientes
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Aba de Agendamentos -->
+            <div class="tab-pane fade" id="agendamentos" role="tabpanel">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-calendar-alt me-2"></i>
+                                Lista de Agendamentos
+                            </h5>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="mostrarConcluidos" 
+                                       {% if mostrar_concluidos %}checked{% endif %}
+                                       onchange="toggleConcluidos()">
+                                <label class="form-check-label" for="mostrarConcluidos">
+                                    Mostrar concluídos
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        {% if agendamentos %}
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Cliente</th>
+                                            <th>Região</th>
+                                            <th>Data/Hora</th>
+                                            <th>Status</th>
+                                            <th>Observações</th>
+                                            <th>Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for agendamento in agendamentos %}
+                                        <tr>
+                                            <td>
+                                                <strong>{{ agendamento.cliente.nome }}</strong>
+                                                {% if agendamento.cliente.telefone %}
+                                                    <br><small class="text-muted">
+                                                        <i class="fas fa-phone me-1"></i>{{ agendamento.cliente.telefone }}
+                                                    </small>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-secondary">{{ agendamento.cliente.regiao }}</span>
+                                            </td>
+                                            <td>
+                                                <strong>{{ agendamento.data_agendamento.strftime('%d/%m/%Y') }}</strong>
+                                                <br><small>{{ agendamento.data_agendamento.strftime('%H:%M') }}</small>
+                                            </td>
+                                            <td>
+                                                {% if agendamento.status == 'Agendado' %}
+                                                    <span class="badge bg-warning">{{ agendamento.status }}</span>
+                                                {% elif agendamento.status == 'Concluído' %}
+                                                    <span class="badge bg-success">{{ agendamento.status }}</span>
+                                                {% else %}
+                                                    <span class="badge bg-danger">{{ agendamento.status }}</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if agendamento.observacoes %}
+                                                    {{ agendamento.observacoes[:50] }}{% if agendamento.observacoes|length > 50 %}...{% endif %}
+                                                {% else %}
+                                                    <span class="text-muted">-</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if agendamento.status == 'Agendado' %}
+                                                    <div class="btn-group btn-group-sm" role="group">
+                                                        <form method="post" action="{{ url_for('finalizar_agendamento', agendamento_id=agendamento.id) }}" class="d-inline">
+                                                            <button type="submit" class="btn btn-success btn-sm" 
+                                                                    onclick="return confirm('Finalizar este agendamento?')"
+                                                                    title="Marcar como concluído">
+                                                                <i class="fas fa-check"></i>
+                                                            </button>
+                                                        </form>
+                                                        <form method="post" action="{{ url_for('apagar_agendamento', agendamento_id=agendamento.id) }}" class="d-inline">
+                                                            <button type="submit" class="btn btn-danger btn-sm" 
+                                                                    onclick="return confirm('Tem certeza que quer apagar este agendamento?')"
+                                                                    title="Remover agendamento">
+                                                                <i class="fas fa-trash"></i>
+                                                            </button>
+                                                        </form>
+                                                    </div>
+                                                {% else %}
+                                                    <span class="badge bg-success">
+                                                        <i class="fas fa-check-circle me-1"></i>
+                                                        Concluído
+                                                    </span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <div class="text-center py-5">
+                                <i class="fas fa-calendar text-muted" style="font-size: 4rem;"></i>
+                                <h4 class="mt-3">Nenhum agendamento encontrado</h4>
+                                <p class="text-muted">Os agendamentos aparecerão aqui após a importação de clientes.</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+{% endblock %}
+
+<!-- Modal para Confirmar Limpeza da Lista de Clientes -->
+<div class="modal fade" id="limparListaModal" tabindex="-1" aria-labelledby="limparListaModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="limparListaModalLabel">
+                    <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                    Confirmar Limpeza da Lista de Clientes
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Atenção!</strong> Esta ação irá remover da lista:
+                </div>
+                <ul>
+                    <li><strong>{{ clientes|length }}</strong> clientes importados</li>
+                    <li>Todos os agendamentos relacionados</li>
+                </ul>
+                <p>Isto permite importar uma nova lista de clientes. Tem certeza que deseja continuar?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form method="post" action="{{ url_for('limpar_lista_clientes') }}" class="d-inline" onsubmit="return confirm('Limpar lista de clientes para importar nova lista?')">
+                    <button type="submit" class="btn btn-warning">
+                        <i class="fas fa-broom me-2"></i>
+                        Sim, Limpar Lista
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block scripts %}
+<script>
+function toggleConcluidos() {
+    const checkbox = document.getElementById('mostrarConcluidos');
+    const mostrar = checkbox.checked ? 'true' : 'false';
+    const url = new URL(window.location);
+    url.searchParams.set('mostrar_concluidos', mostrar);
+    window.location.href = url.toString();
+}
+</script>
+{% endblock %}

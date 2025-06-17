@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+
+{% block title %}Importar Clientes - Sistema de Transportes{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h1 class="card-title mb-0">
+                    <i class="fas fa-upload me-2"></i>
+                    Importar Mensagem do Seguro
+                </h1>
+                <p class="card-text text-muted mt-2">
+                    Cole a mensagem do seguro - o sistema detecta automaticamente as regiões dos clientes
+                </p>
+            </div>
+            
+            <div class="card-body">
+                <form action="{{ url_for('importar') }}" method="post">
+                    <!-- Campo de Mensagem -->
+                    <div class="mb-4">
+                        <label for="mensagem" class="form-label fw-bold">
+                            <i class="fas fa-clipboard me-2"></i>
+                            Mensagem do Seguro:
+                        </label>
+                        <textarea 
+                            name="mensagem" 
+                            id="mensagem" 
+                            rows="12" 
+                            class="form-control" 
+                            placeholder="Cole aqui a mensagem completa do seguro com os dados dos clientes.
+
+Formato esperado (separado por vírgulas):
+Nome Horário Destino NomeSeguro Morada Contacto, Nome Horário Destino NomeSeguro Morada Contacto...
+
+Exemplo:
+João Silva 14:00 Hospital São José seguro fidelidade Rua das Flores 12 912345678, Ana Costa 15:30 Clínica Central seguro altise Rua da Paz 45 913334455
+
+O sistema detecta automaticamente as regiões e identifica o nome do seguro."
+                            required></textarea>
+                        <div class="form-text">
+                            <strong>Formato esperado:</strong> Nome Horário Destino NomeSeguro Morada Contacto
+                            <br><strong>Separação:</strong> Cada cliente separado por vírgula
+                            <br><strong>Detecção automática:</strong> Regiões identificadas pelas moradas e destinos
+                        </div>
+                    </div>
+
+                    <!-- Botões de Ação -->
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <button type="button" class="btn btn-secondary me-md-2" onclick="limparFormulario()">
+                            <i class="fas fa-eraser me-2"></i>
+                            Limpar
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-magic me-2"></i>
+                            Processar Mensagem do Seguro
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Instruções de Uso -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Como Funciona o Sistema
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-clipboard text-success me-2"></i>1. Cole a Mensagem</h6>
+                        <p class="text-muted">Cole a mensagem completa do seguro no campo de texto.</p>
+                        
+                        <h6><i class="fas fa-robot text-success me-2"></i>2. Detecção Automática</h6>
+                        <p class="text-muted">O sistema identifica automaticamente as regiões pelos destinos e moradas.</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-clock text-success me-2"></i>3. Agendamento Inteligente</h6>
+                        <p class="text-muted">Os horários preferenciais dos clientes são respeitados nos agendamentos.</p>
+                        
+                        <h6><i class="fas fa-calendar-check text-success me-2"></i>4. Visualização na Agenda</h6>
+                        <p class="text-muted">Todos os clientes processados aparecem organizados na agenda por região.</p>
+                    </div>
+                </div>
+                
+                <hr class="my-4">
+                
+                <div class="alert alert-info" role="alert">
+                    <i class="fas fa-lightbulb me-2"></i>
+                    <strong>Exemplo de mensagem do seguro:</strong><br>
+                    <code>João Silva 14:00 Hospital São José seguro fidelidade Rua das Flores 12 912345678, Ana Costa 15:30 Clínica Central seguro altise Rua da Paz 45 913334455</code>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <i class="fas fa-map-marked-alt text-primary" style="font-size: 2rem;"></i>
+                            <h6 class="mt-2">Regiões Suportadas</h6>
+                            <small class="text-muted">Lisboa, Sintra, Porto, Setúbal, Coimbra, Piquete<br><strong>Geral:</strong> Apenas para casos especiais</small>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <i class="fas fa-clock text-warning" style="font-size: 2rem;"></i>
+                            <h6 class="mt-2">Horários Flexíveis</h6>
+                            <small class="text-muted">Aceita formatos 09:00, 9h, 14:30, etc.</small>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <i class="fas fa-route text-info" style="font-size: 2rem;"></i>
+                            <h6 class="mt-2">Atribuição Automática</h6>
+                            <small class="text-muted">Entrega automaticamente ao motorista da região. Se não reconhecer, vai para o Geral</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function limparFormulario() {
+    document.getElementById('mensagem').value = '';
+}
+
+// Auto-resize textarea
+document.getElementById('mensagem').addEventListener('input', function() {
+    this.style.height = 'auto';
+    this.style.height = this.scrollHeight + 'px';
+});
+</script>
+{% endblock %}

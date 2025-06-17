@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+
+{% block title %}Pré-visualização - Sistema de Transportes{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <!-- Cabeçalho -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1>
+                    <i class="fas fa-eye me-2"></i>
+                    Pré-visualização da Mensagem
+                </h1>
+                <p class="text-muted mb-0">
+                    Verifique como a mensagem foi reconhecida antes de confirmar a importação
+                </p>
+            </div>
+        </div>
+
+        <!-- Mensagem Original -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-clipboard me-2"></i>
+                    Mensagem Original
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-light border">
+                    <code>{{ mensagem_original }}</code>
+                </div>
+            </div>
+        </div>
+
+        <!-- Clientes Reconhecidos por Região -->
+        {% for regiao, clientes in clientes_por_regiao.items() %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        {% if regiao == 'Geral' %}
+                            <i class="fas fa-exclamation-triangle text-danger me-2"></i>
+                            {{ regiao }} - Localização Não Reconhecida
+                        {% else %}
+                            <i class="fas fa-truck text-success me-2"></i>
+                            Motorista da Região {{ regiao }}
+                        {% endif %}
+                        <span class="badge bg-secondary ms-2">{{ clientes|length }} cliente(s)</span>
+                    </h5>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th>Horário</th>
+                                <th>Destino</th>
+                                <th>Seguro</th>
+                                <th>Morada</th>
+                                <th>Contacto</th>
+                                <th>Dados Originais</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for cliente in clientes %}
+                            <tr>
+                                <td><strong>{{ cliente.nome }}</strong></td>
+                                <td>
+                                    {% if cliente.horario %}
+                                        <span class="badge bg-info">{{ cliente.horario }}</span>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if cliente.destino %}
+                                        <i class="fas fa-map-marker-alt text-primary me-1"></i>{{ cliente.destino }}
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if cliente.nome_seguro %}
+                                        <span class="badge bg-success">{{ cliente.nome_seguro }}</span>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if cliente.morada %}
+                                        {{ cliente.morada }}
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if cliente.contacto %}
+                                        <a href="tel:{{ cliente.contacto }}" class="text-decoration-none">
+                                            <i class="fas fa-phone me-1"></i>{{ cliente.contacto }}
+                                        </a>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <small class="text-muted">{{ cliente.dados_originais }}</small>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+
+        <!-- Ações -->
+        <div class="card">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-check-circle text-success me-2"></i>Confirmação</h6>
+                        <p class="text-muted">Se os dados estão corretos, confirme a importação para salvar na base de dados.</p>
+                        <form method="post" action="{{ url_for('confirmar_importacao') }}">
+                            <input type="hidden" name="mensagem_original" value="{{ mensagem_original }}">
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-check me-2"></i>
+                                Confirmar e Importar
+                            </button>
+                        </form>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-edit text-warning me-2"></i>Correção</h6>
+                        <p class="text-muted">Se precisar corrigir algo, volte à página de importação.</p>
+                        <a href="{{ url_for('importar') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>
+                            Voltar e Corrigir
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
